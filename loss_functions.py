@@ -53,8 +53,9 @@ def loglik_discrete(a, b, y_, u_, output_collection=(), name=None):
     with tf.name_scope(name, "weibull_loglik_discrete", [a, b, y_, u_]):
         hazard0 = tf.pow(tf.div(y_ + 1e-35, a), b)  # 1e-9 safe, really
         hazard1 = tf.pow(tf.div(y_ + 1.0, a), b)
-        loglik = tf.multiply(u_, tf.log(
-            tf.exp(hazard1 - hazard0) - 1.0)) - hazard1
+        int1 = hazard1 - hazard0
+        int2 = tf.log(tf.exp(int1) - 1.0)
+        loglik = tf.multiply(u_, int2) - hazard1
 
         tf.add_to_collection(output_collection, loglik)
     return(loglik)
@@ -72,7 +73,7 @@ def betapenalty(b, location=10.0, growth=20.0, output_collection=(), name=None):
     Returns:
         A positive `Tensor` of same shape as `b` being a penalty term
     """
-    with tf.name_scope(name, "weibull_betapenalty", [a, b, y_, u_]):
+    with tf.name_scope(name, "weibull_betapenalty", [b]):
         scale = growth / location
         penalty = tf.exp(scale * (b - location))
         tf.add_to_collection(output_collection, penalty)
